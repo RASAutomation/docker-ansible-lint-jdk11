@@ -61,43 +61,43 @@ spec:
                 if ( env.CHANGE_ID != null ) {
                     // Building for a Pull Request
                     echo "Building for PR-${env.CHANGE_ID}: ${env.CHANGE_NAME}"
-                    sh '''
+                    sh """
                     #!/busybox/sh
                     /kaniko/executor \
                         -f `pwd`/Dockerfile \
                         -c `pwd` \
                         --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.CHANGE_ID}
-                    '''
+                    """
                 } else if ( env.TAG_NAME != null ) {
                     // Building for a GitHub TAG / Release
                     echo "Building for git tag: ${env.TAG_NAME}"
-                    sh '''
+                    sh """
                     #!/busybox/sh
                     /kaniko/executor \
                         -f `pwd`/Dockerfile \
                         -c `pwd` \
                         --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.TAG_NAME}
-                    '''
+                    """
                 } else if ( env.BRANCH_NAME == 'master') {
                     // Building for origin/master branch
                     echo "Building for origin/master branch"
-                    sh '''
+                    sh """
                     #!/busybox/sh
                     /kaniko/executor \
                         -f `pwd`/Dockerfile \
                         -c `pwd` \
                         --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:latest
-                    '''
+                    """
                 } else {
                     // Building for arbitrary branch on origin
                     echo "Building for origin/${env.BRANCH_NAME} branch"
-                    sh '''
+                    sh """
                     #!/busybox/sh
                     /kaniko/executor \
                         -f `pwd`/Dockerfile \
                         -c `pwd` \
                         --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}
-                    '''
+                    """
                 }
             }
 
