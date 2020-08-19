@@ -15,9 +15,6 @@ def home = "/home/jenkins/agent"
 def workspace = "${home}/workspace/build-docker-ansible-lint-jdk11"
 def workdir = "${workspace}/src/github.com/rasautomation/docker-ansible-lint-jdk11/"
 
-// Ansible Lint Version
-def VERSION = "4.1.0"
-
 podTemplate (
     label: label,
     yaml:
@@ -47,6 +44,7 @@ spec:
 ) {
     node(label) {
         dir(workdir) {
+
             stage('Checkout SCM') {
                 timeout(time: 3, unit: 'MINUTES') {
                     checkout([
@@ -57,21 +55,24 @@ spec:
                         userRemoteConfigs: scm.userRemoteConfigs
                     ])
                 }
-                echo sh(script: 'env|sort', returnStdout: true)
             }
+
             stage('Docker Build docker-ansible-lint-jdk11') {
-                echo sh(script: 'env|sort', returnStdout: true)
-                container(name: 'kaniko', shell: '/busybox/sh') {
-                    echo sh(script: 'env|sort', returnStdout: true)
-                    sh '''
-                    #!/busybox/sh
-                    /kaniko/executor \
-                        -f `pwd`/Dockerfile \
-                        -c `pwd` \
-                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${VERSION}
-                    '''
+                if ( env.CHANGE_ID != null ) {
+                    // Building for a Pull Request
+                    echo "I am a pull request"
+                } else if ( env.TAG_NAME != null ) {
+                    // Building for a GitHub TAG / Release
+                    echo "I am a TAG named ${ env.TAG_NAME }"
+                } else if ( env.BRANCH_NAME == 'master') {
+                    // Building for origin/master branch
+                    echo "I am a commit to BRANCH ${ env.BRANCH_NAME }"
+                } else {
+                    // Building for arbitrary branch on origin
+                    echo "I am a commit to BRANCH ${ env.BRANCH_NAME }"
                 }
             }
-        }
-    }
-}
+
+        } //dir(workdir) {
+    } // node(label) {
+} //podTemplate(...) {
