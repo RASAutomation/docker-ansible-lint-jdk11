@@ -67,7 +67,7 @@ spec:
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.CHANGE_ID}
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:PR-${env.CHANGE_ID}
                         """
                     }
                 } else if ( env.TAG_NAME != null ) {
