@@ -60,16 +60,44 @@ spec:
             stage('Docker Build docker-ansible-lint-jdk11') {
                 if ( env.CHANGE_ID != null ) {
                     // Building for a Pull Request
-                    echo "I am a pull request"
+                    echo "Building for PR-${env.CHANGE_ID}: ${env.CHANGE_NAME}"
+                    sh '''
+                    #!/busybox/sh
+                    /kaniko/executor \
+                        -f `pwd`/Dockerfile \
+                        -c `pwd` \
+                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.CHANGE_ID}
+                    '''
                 } else if ( env.TAG_NAME != null ) {
                     // Building for a GitHub TAG / Release
-                    echo "I am a TAG named ${ env.TAG_NAME }"
+                    echo "Building for git tag: ${env.TAG_NAME}"
+                    sh '''
+                    #!/busybox/sh
+                    /kaniko/executor \
+                        -f `pwd`/Dockerfile \
+                        -c `pwd` \
+                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.TAG_NAME}
+                    '''
                 } else if ( env.BRANCH_NAME == 'master') {
                     // Building for origin/master branch
-                    echo "I am a commit to BRANCH ${ env.BRANCH_NAME }"
+                    echo "Building for origin/master branch"
+                    sh '''
+                    #!/busybox/sh
+                    /kaniko/executor \
+                        -f `pwd`/Dockerfile \
+                        -c `pwd` \
+                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:latest
+                    '''
                 } else {
                     // Building for arbitrary branch on origin
-                    echo "I am a commit to BRANCH ${ env.BRANCH_NAME }"
+                    echo "Building for origin/${env.BRANCH_NAME} branch"
+                    sh '''
+                    #!/busybox/sh
+                    /kaniko/executor \
+                        -f `pwd`/Dockerfile \
+                        -c `pwd` \
+                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}
+                    '''
                 }
             }
 
