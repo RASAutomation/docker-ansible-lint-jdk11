@@ -97,13 +97,14 @@ spec:
                 } else {
                     // Building for arbitrary branch on origin
                     echo "Building for origin/${env.BRANCH_NAME} branch"
+                    def shortCommitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true)
                     container(name: 'kaniko', shell: '/busybox/sh'){
                         sh """
                         #!/busybox/sh
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash}
                         """
                     }
                 }
