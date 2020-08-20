@@ -104,8 +104,8 @@ spec:
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest \
                             --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash}
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest
                         """
                     }
                 }
