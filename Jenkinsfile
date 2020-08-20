@@ -117,14 +117,15 @@ spec:
     } // node(label) {
 } //podTemplate(...) {
 
+def testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest"
 podTemplate(
     label: testPodLabel,
-    containers: [containerTemplate(name: 'golang', image: 'golang:1.8.0', ttyEnabled: true, command: 'cat')]
+    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: testImage, ttyEnabled: true, command: 'cat')]
 ) {
     node(testPodLabel) {
         dir(workdir) {
             stage('Test docker-ansible-lint-jdk11 container') {
-                container(name: golang, shell: '/busybox/sh') {
+                container(name: 'ansible-lint-jdk11', shell: '/busybox/sh') {
                     echo "HELLO WORLD"
                 }
             }
