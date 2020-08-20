@@ -10,7 +10,9 @@
  * https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-in-the-cluster-that-holds-your-authorization-token
  */
 
-def label = "build-ansible-lint-jdk11-${UUID.randomUUID().toString()}"
+def uuid = UUID.randomUUID().toString()
+def label = "build-ansible-lint-jdk11-${uuid}"
+def testPodLabel = "test-ansible-lint-jdk11-${uuid}"
 def home = "/home/jenkins/agent"
 def workspace = "${home}/workspace/build-docker-ansible-lint-jdk11"
 def workdir = "${workspace}/src/github.com/rasautomation/docker-ansible-lint-jdk11/"
@@ -111,18 +113,21 @@ spec:
                 }
             }
 
-            stage('Test docker-ansible-lint-jdk11 container') {
-                def testPodLabel = "test-ansible-lint-jdk11-${UUID.randomUUID().toString()}"
-                podTemplate(
-                    label: testPodLabel,
-                    containers: [containerTemplate(name: 'golang', image: 'golang:1.8.0', ttyEnabled: true, command: 'cat')]
-                ) {
-                    node(testPodLabel) {
-                        echo "FOOBAR"
-                    }
-                }
-            }
-
         } //dir(workdir) {
     } // node(label) {
 } //podTemplate(...) {
+
+podTemplate(
+    label: testPodLabel,
+    containers: [containerTemplate(name: 'golang', image: 'golang:1.8.0', ttyEnabled: true, command: 'cat')]
+) {
+    node(testPodLabel) {
+        dir(workdir) {
+            stage('Test docker-ansible-lint-jdk11 container') {
+                container(name: golang, shell: '/busybox/sh') {
+                    echo "HELLO WORLD"
+                }
+            }
+        }
+    }
+}
