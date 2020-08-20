@@ -111,6 +111,18 @@ spec:
                 }
             }
 
+            stage('Test docker-ansible-lint-jdk11 container') {
+                def testPodLabel = "test-ansible-lint-jdk11-${UUID.randomUUID().toString()}"
+                podTemplate(
+                    label: testPodLabel,
+                    containers: [containerTemplate(name: 'golang', image: 'golang:1.8.0', ttyEnabled: true, command: 'cat')]
+                ) {
+                    node(testPodLabel) {
+                        echo "FOOBAR"
+                    }
+                }
+            }
+
         } //dir(workdir) {
     } // node(label) {
 } //podTemplate(...) {
