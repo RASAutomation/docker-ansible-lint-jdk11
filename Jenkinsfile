@@ -139,8 +139,8 @@ podTemplate(
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
                     def jdkVersion = sh(script: 'java -version 2>&1', returnStdout: true) =~ /\d{1,3}\.\d{1,3}\.\d{1,3}/
 
-                    if (compareVersions(v1: '11.0.8', v2: jdkVersion[0], failIfEmpty: true) == 1) {
-                        error("Expected jdk version  >= 11.0.0. Got ${jdkVersion[0]}")
+                    if (compareVersions(v1: '11.0.0', v2: jdkVersion[0], failIfEmpty: true) == 1) {
+                        error("Expected jdk version  >= 11.0.0; Got ${jdkVersion[0]}")
                     }
                 }
             }
