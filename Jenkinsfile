@@ -149,7 +149,7 @@ podTemplate(
                 def scannerHome = tool 'SonarScanner 4.3';
                 container(name: 'ansible-lint-jdk11'){
                     withSonarQubeEnv() {
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectBaseDir=${workdir}ansible"
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=ansible-lint-jdk11 -Dsonar.projectBaseDir=${workdir}"
                     }
                 }
             }
