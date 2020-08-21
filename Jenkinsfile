@@ -47,7 +47,7 @@ spec:
     node(label) {
         dir(workdir) {
 
-            stage('Checkout SCM') {
+            stage('Checkout SCM for Build') {
                 timeout(time: 3, unit: 'MINUTES') {
                     checkout([
                         $class: 'GitSCM',
@@ -58,68 +58,39 @@ spec:
                     ])
                 }
 
+                // Build Control flow
+                kanikoDestinations = """
+                    --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
+                """
                 if ( env.CHANGE_ID != null ) {
+                    // Building for Pull Request
                     dockerTag = "PR-${env.CHANGE_ID}"
                 } else if ( env.TAG_NAME != null ) {
+                    // Building for Git Tag
                     dockerTag = "${env.TAG_NAME}"
                 } else if ( env.BRANCH_NAME == 'master') {
+                    // Building for `master` branch
                     dockerTag = "latest"
                 } else {
+                    // Building for arbitrary branch
                     dockerTag = "${env.BRANCH_NAME}-latest"
+                    def shortCommitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true)
+                    kanikoDestinations = """
+                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash} \
+                        ${destinations}
+                    """
                 }
             }
 
             stage('Docker Build docker-ansible-lint-jdk11') {
-                if ( env.CHANGE_ID != null ) {
-                    // Building for a Pull Request
-                    echo "Building for PR-${env.CHANGE_ID}: ${env.CHANGE_NAME}"
-                    container(name: 'kaniko', shell: '/busybox/sh'){
-                        sh """
-                        #!/busybox/sh
-                        /kaniko/executor \
-                            -f `pwd`/Dockerfile \
-                            -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
-                        """
-                    }
-                } else if ( env.TAG_NAME != null ) {
-                    // Building for a GitHub TAG / Release
-                    echo "Building for git tag: ${env.TAG_NAME}"
-                    container(name: 'kaniko', shell: '/busybox/sh'){
-                        sh """
-                        #!/busybox/sh
-                        /kaniko/executor \
-                            -f `pwd`/Dockerfile \
-                            -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
-                        """
-                    }
-                } else if ( env.BRANCH_NAME == 'master') {
-                    // Building for origin/master branch
-                    echo "Building for origin/master branch"
-                    container(name: 'kaniko', shell: '/busybox/sh'){
-                        sh """
-                        #!/busybox/sh
-                        /kaniko/executor \
-                            -f `pwd`/Dockerfile \
-                            -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
-                        """
-                    }
-                } else {
-                    // Building for arbitrary branch on origin
-                    echo "Building for origin/${env.BRANCH_NAME} branch"
-                    def shortCommitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true)
-                    container(name: 'kaniko', shell: '/busybox/sh'){
-                        sh """
-                        #!/busybox/sh
-                        /kaniko/executor \
-                            -f `pwd`/Dockerfile \
-                            -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag} \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash}
-                        """
-                    }
+                container(name: 'kaniko', shell: '/busybox/sh'){
+                    sh """
+                    #!/busybox/sh
+                    /kaniko/executor \
+                        -f `pwd`/Dockerfile \
+                        -c `pwd` \
+                        ${kanikoDestinations}
+                    """
                 }
             }
 
@@ -133,18 +104,6 @@ podTemplate(
 ) {
     node(testPodLabel) {
         dir(workdir) {
-
-            stage('Checkout SCM for Test') {
-                timeout(time: 3, unit: 'MINUTES') {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: scm.branches,
-                        doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-                        extensions: [[$class: 'CleanBeforeCheckout']],
-                        userRemoteConfigs: scm.userRemoteConfigs
-                    ])
-                }
-            }
 
             stage('Test ansible-lint version') {
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
@@ -167,6 +126,15 @@ podTemplate(
             }
 
             stage('Test SonarQube Analysis') {
+                timeout(time: 3, unit: 'MINUTES') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: scm.branches,
+                        doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                        extensions: [[$class: 'CleanBeforeCheckout']],
+                        userRemoteConfigs: scm.userRemoteConfigs
+                    ])
+                }
                 def scannerHome = tool 'SonarScanner 4.3';
                 container(name: 'ansible-lint-jdk11'){
                     withSonarQubeEnv() {
