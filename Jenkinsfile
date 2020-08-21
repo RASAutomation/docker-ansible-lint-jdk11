@@ -57,6 +57,16 @@ spec:
                         userRemoteConfigs: scm.userRemoteConfigs
                     ])
                 }
+
+                if ( env.CHANGE_ID != null ) {
+                    dockerTag = "PR-${env.CHANGE_ID}"
+                } else if ( env.TAG_NAME != null ) {
+                    dockerTag = "${env.TAG_NAME}"
+                } else if ( env.BRANCH_NAME == 'master') {
+                    dockerTag = "latest"
+                } else {
+                    dockerTag = "${env.BRANCH_NAME}-latest"
+                }
             }
 
             stage('Docker Build docker-ansible-lint-jdk11') {
@@ -69,7 +79,7 @@ spec:
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:PR-${env.CHANGE_ID}
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
                         """
                     }
                 } else if ( env.TAG_NAME != null ) {
@@ -81,7 +91,7 @@ spec:
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.TAG_NAME}
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
                         """
                     }
                 } else if ( env.BRANCH_NAME == 'master') {
@@ -93,7 +103,7 @@ spec:
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:latest
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
                         """
                     }
                 } else {
@@ -106,7 +116,7 @@ spec:
                         /kaniko/executor \
                             -f `pwd`/Dockerfile \
                             -c `pwd` \
-                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest \
+                            --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag} \
                             --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash}
                         """
                     }
@@ -119,7 +129,7 @@ spec:
 
 podTemplate(
     label: testPodLabel,
-    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: testImage, ttyEnabled: true, command: 'cat')]
+    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: dockerTag, ttyEnabled: true, command: 'cat')]
 ) {
     node(testPodLabel) {
         dir(workdir) {
@@ -133,16 +143,6 @@ podTemplate(
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: scm.userRemoteConfigs
                     ])
-                }
-
-                if ( env.CHANGE_ID != null ) {
-                    testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:PR-${env.CHANGE_ID}"
-                } else if ( env.TAG_NAME != null ) {
-                    testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.TAG_NAME}"
-                } else if ( env.BRANCH_NAME == 'master') {
-                    testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:latest"
-                } else {
-                    testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest"
                 }
             }
 
