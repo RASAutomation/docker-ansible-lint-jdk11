@@ -59,25 +59,32 @@ spec:
                 }
 
                 // Build Control flow
-                kanikoDestinations = """
-                    --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}
-                """
+                dockerRepository = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11"
                 if ( env.CHANGE_ID != null ) {
                     // Building for Pull Request
                     dockerTag = "PR-${env.CHANGE_ID}"
+                    kanikoDestinations = """
+                        --destination=${dockerRepository}:${dockerTag}
+                    """
                 } else if ( env.TAG_NAME != null ) {
                     // Building for Git Tag
                     dockerTag = "${env.TAG_NAME}"
+                    kanikoDestinations = """
+                        --destination=${dockerRepository}:${dockerTag}
+                    """
                 } else if ( env.BRANCH_NAME == 'master') {
                     // Building for `master` branch
                     dockerTag = "latest"
+                    kanikoDestinations = """
+                        --destination=${dockerRepository}:${dockerTag}
+                    """
                 } else {
                     // Building for arbitrary branch
                     dockerTag = "${env.BRANCH_NAME}-latest"
                     def shortCommitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true)
                     kanikoDestinations = """
-                        --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash} \
-                        ${kanikoDestinations}
+                        --destination=${dockerRepository}:${dockerTag} \
+                        --destination=${dockerRepository}:${env.BRANCH_NAME}-${shortCommitHash}
                     """
                 }
             }
