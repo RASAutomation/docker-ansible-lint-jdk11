@@ -117,7 +117,16 @@ spec:
     } // node(label) {
 } //podTemplate(...) {
 
-def testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest"
+
+if ( env.CHANGE_ID != null ) {
+    def testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:PR-${env.CHANGE_ID}"
+} else if ( env.TAG_NAME != null ) {
+    def testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.TAG_NAME}"
+} else if ( env.BRANCH_NAME == 'master') {
+    def testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:latest"
+} else {
+    def testImage = "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-latest"
+}
 podTemplate(
     label: testPodLabel,
     containers: [containerTemplate(name: 'ansible-lint-jdk11', image: testImage, ttyEnabled: true, command: 'cat')]
