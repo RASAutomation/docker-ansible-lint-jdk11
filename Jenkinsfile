@@ -125,7 +125,7 @@ podTemplate(
     node(testPodLabel) {
         dir(workdir) {
 
-            stage('Test docker-ansible-lint-jdk11 container ansible-lint version') {
+            stage('Test ansible-lint version') {
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
                     def ansibleLintVersion = sh(script: 'ansible-lint --version', returnStdout: true) =~ /\d{1,3}\.\d{1,3}\.\d{1,3}/
 
@@ -135,11 +135,11 @@ podTemplate(
                 }
             }
 
-            stage('Test docker-ansible-lint-jdk11 container openJDK version') {
+            stage('Test openJDK version') {
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
                     def jdkVersion = sh(script: 'java -version 2>&1', returnStdout: true) =~ /\d{1,3}\.\d{1,3}\.\d{1,3}/
 
-                    if (compareVersions(v1: '11.0.0', v2: jdkVersion[0], failIfEmpty: true) == 1) {
+                    if (compareVersions(v1: '11.0.8', v2: jdkVersion[0], failIfEmpty: true) == 1) {
                         error("Expected jdk version  >= 11.0.0. Got ${jdkVersion[0]}")
                     }
                 }
