@@ -129,7 +129,7 @@ spec:
 
 podTemplate(
     label: testPodLabel,
-    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: dockerTag, ttyEnabled: true, command: 'cat')]
+    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}", ttyEnabled: true, command: 'cat')]
 ) {
     node(testPodLabel) {
         dir(workdir) {
