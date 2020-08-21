@@ -125,6 +125,18 @@ podTemplate(
     node(testPodLabel) {
         dir(workdir) {
 
+            stage('Checkout SCM for Test') {
+                timeout(time: 3, unit: 'MINUTES') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: scm.branches,
+                        doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                        extensions: [[$class: 'CleanBeforeCheckout']],
+                        userRemoteConfigs: scm.userRemoteConfigs
+                    ])
+                }
+            }
+
             stage('Test ansible-lint version') {
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
                     def ansibleLintVersion = sh(script: 'ansible-lint --version', returnStdout: true) =~ /\d{1,3}\.\d{1,3}\.\d{1,3}/
