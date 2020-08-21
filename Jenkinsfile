@@ -17,6 +17,9 @@ def home = "/home/jenkins/agent"
 def workspace = "${home}/workspace/build-docker-ansible-lint-jdk11"
 def workdir = "${workspace}/src/github.com/rasautomation/docker-ansible-lint-jdk11/"
 
+DESIRED_ANSIBLE_LINT_VERSION = '4.1.0'
+MIN_JDK_VERSION = '11.0.0'
+
 podTemplate (
     label: label,
     yaml:
@@ -63,29 +66,20 @@ spec:
                 if ( env.CHANGE_ID != null ) {
                     // Building for Pull Request
                     dockerTag = "PR-${env.CHANGE_ID}"
-                    kanikoDestinations = """
-                        --destination=${dockerRepository}:${dockerTag}
-                    """
+                    kanikoDestinations = "--destination=${dockerRepository}:${dockerTag}"
                 } else if ( env.TAG_NAME != null ) {
                     // Building for Git Tag
                     dockerTag = "${env.TAG_NAME}"
-                    kanikoDestinations = """
-                        --destination=${dockerRepository}:${dockerTag}
-                    """
+                    kanikoDestinations = "--destination=${dockerRepository}:${dockerTag}"
                 } else if ( env.BRANCH_NAME == 'master') {
                     // Building for `master` branch
                     dockerTag = "latest"
-                    kanikoDestinations = """
-                        --destination=${dockerRepository}:${dockerTag}
-                    """
+                    kanikoDestinations = "--destination=${dockerRepository}:${dockerTag}"
                 } else {
                     // Building for arbitrary branch
                     dockerTag = "${env.BRANCH_NAME}-latest"
                     def shortCommitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true)
-                    kanikoDestinations = """
-                        --destination=${dockerRepository}:${dockerTag} \
-                        --destination=${dockerRepository}:${env.BRANCH_NAME}-${shortCommitHash}
-                    """
+                    kanikoDestinations = "--destination=${dockerRepository}:${dockerTag} --destination=${dockerRepository}:${env.BRANCH_NAME}-${shortCommitHash}"
                 }
             }
 
@@ -95,8 +89,7 @@ spec:
                     #!/busybox/sh
                     /kaniko/executor \
                         -f `pwd`/Dockerfile \
-                        -c `pwd` \
-                        ${kanikoDestinations}
+                        -c `pwd` ${kanikoDestinations}
                     """
                 }
             }
@@ -107,7 +100,7 @@ spec:
 
 podTemplate(
     label: testPodLabel,
-    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: "287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${dockerTag}", ttyEnabled: true, command: 'cat')]
+    containers: [containerTemplate(name: 'ansible-lint-jdk11', image: "${dockerRepository}:${dockerTag}", ttyEnabled: true, command: 'cat')]
 ) {
     node(testPodLabel) {
         dir(workdir) {
@@ -116,8 +109,8 @@ podTemplate(
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
                     def ansibleLintVersion = sh(script: 'ansible-lint --version', returnStdout: true) =~ /\d{1,3}\.\d{1,3}\.\d{1,3}/
 
-                    if (compareVersions(v1: '4.1.0', v2: ansibleLintVersion[0], failIfEmpty: true) != 0) {
-                        error("Expected ansible-lint version 4.1.0. Got ${ansibleLintVersion[0]}")
+                    if (compareVersions(v1: DESIRED_ANSIBLE_LINT_VERSION, v2: ansibleLintVersion[0], failIfEmpty: true) != 0) {
+                        error("Expected ansible-lint version ${DESIRED_ANSIBLE_LINT_VERSION}; Got ${ansibleLintVersion[0]}")
                     }
                 }
             }
@@ -126,8 +119,8 @@ podTemplate(
                 container(name: 'ansible-lint-jdk11', shell: '/bin/bash') {
                     def jdkVersion = sh(script: 'java -version 2>&1', returnStdout: true) =~ /\d{1,3}\.\d{1,3}\.\d{1,3}/
 
-                    if (compareVersions(v1: '11.0.0', v2: jdkVersion[0], failIfEmpty: true) == 1) {
-                        error("Expected jdk version  >= 11.0.0; Got ${jdkVersion[0]}")
+                    if (compareVersions(v1: MIN_JDK_VERSION, v2: jdkVersion[0], failIfEmpty: true) == 1) {
+                        error("Expected jdk version  >= ${MIN_JDK_VERSION}; Got ${jdkVersion[0]}")
                     }
                 }
             }
