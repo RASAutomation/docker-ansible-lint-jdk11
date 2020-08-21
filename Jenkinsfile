@@ -77,7 +77,7 @@ spec:
                     def shortCommitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true)
                     kanikoDestinations = """
                         --destination=287908807331.dkr.ecr.us-east-2.amazonaws.com/ansible-lint-jdk11:${env.BRANCH_NAME}-${shortCommitHash} \
-                        ${destinations}
+                        ${kanikoDestinations}
                     """
                 }
             }
