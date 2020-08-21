@@ -145,6 +145,15 @@ podTemplate(
                 }
             }
 
+            stage('Test SonarQube Analysis') {
+                def scannerHome = tool 'SonarScanner 4.3';
+                container(name: 'ansible-lint-jdk11'){
+                    withSonarQubeEnv() {
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectBaseDir=${workdir}ansible"
+                    }
+                }
+            }
+
         } //dir(workdir) {
     } // node(testPodLabel) {
 } //podTemplate(...) {
